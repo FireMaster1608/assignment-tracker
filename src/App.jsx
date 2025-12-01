@@ -11,15 +11,15 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
-// --- UTILS (Updated Pastel Gradient) ---
+// --- UTILS (Corrected Gradient & Colors) ---
 const COLORS = {
-  pink: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-200', btn: 'bg-pink-500 hover:bg-pink-600', ring: 'ring-pink-400' },
-  orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', btn: 'bg-orange-500 hover:bg-orange-600', ring: 'ring-orange-400' },
-  red: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200', btn: 'bg-rose-500 hover:bg-rose-600', ring: 'ring-rose-400' },
-  purple: { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200', btn: 'bg-violet-500 hover:bg-violet-600', ring: 'ring-violet-400' },
-  blue: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', btn: 'bg-blue-500 hover:bg-blue-600', ring: 'ring-blue-400' },
-  green: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200', btn: 'bg-emerald-500 hover:bg-emerald-600', ring: 'ring-emerald-400' },
-  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200', btn: 'bg-yellow-400 hover:bg-yellow-500', ring: 'ring-yellow-400' },
+  pink: { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300', btn: 'bg-pink-500 hover:bg-pink-600', ring: 'ring-pink-400' },
+  orange: { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300', btn: 'bg-orange-500 hover:bg-orange-600', ring: 'ring-orange-400' },
+  red: { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300', btn: 'bg-red-500 hover:bg-red-600', ring: 'ring-red-400' },
+  purple: { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300', btn: 'bg-purple-500 hover:bg-purple-600', ring: 'ring-purple-400' },
+  blue: { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300', btn: 'bg-blue-500 hover:bg-blue-600', ring: 'ring-blue-400' },
+  green: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300', btn: 'bg-green-500 hover:bg-green-600', ring: 'ring-green-400' },
+  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300', btn: 'bg-yellow-400 hover:bg-yellow-500', ring: 'ring-yellow-400' },
 };
 
 const getUrgencyStyles = (dateStr, timeStr) => {
@@ -33,7 +33,7 @@ const getUrgencyStyles = (dateStr, timeStr) => {
 
   if (diffHours < 0) return { color: 'text-red-600 font-extrabold', label: 'Overdue', border: 'border-l-red-500' };
   if (diffHours < 24) return { color: 'text-orange-600 font-bold', label: 'Due Today', border: 'border-l-orange-400' };
-  if (diffDays <= 1) return { color: 'text-amber-600 font-bold', label: 'Tomorrow', border: 'border-l-amber-400' };
+  if (diffDays <= 1) return { color: 'text-yellow-600 font-bold', label: 'Tomorrow', border: 'border-l-yellow-400' };
   if (diffDays <= 3) return { color: 'text-lime-600', label: 'Soon', border: 'border-l-lime-400' };
   if (diffDays <= 7) return { color: 'text-emerald-600', label: 'This Week', border: 'border-l-emerald-400' };
   
@@ -99,9 +99,9 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
              {urgency.label === 'Overdue' && <span className="text-[10px] bg-red-100 text-red-600 px-3 py-1 rounded-full font-black tracking-wider">LATE</span>}
           </div>
 
-          {/* Body: Title & Class (Title size reduced) */}
+          {/* Body: Title & Class (Reduced Title Size) */}
           <div className="flex items-center flex-wrap gap-3 mb-3">
-            <h3 className="font-extrabold text-gray-800 text-lg leading-tight tracking-tight">{a.title}</h3>
+            <h3 className="font-extrabold text-gray-800 text-xl leading-tight tracking-tight">{a.title}</h3>
             <span className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider ${classTheme.bg} ${classTheme.text}`}>
               {cls?.name}
             </span>
@@ -116,13 +116,13 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
         </div>
       </div>
 
-      {/* Link Bar (Bottom) */}
+      {/* Link Bar */}
       {state?.personal_link && !expanded && (
         <a 
           href={state.personal_link.startsWith('http') ? state.personal_link : `https://${state.personal_link}`} 
           target="_blank" 
           rel="noreferrer"
-          className="block bg-gray-50 hover:bg-slate-100 px-6 py-3 border-t border-slate-100 transition-colors group/link"
+          className="block bg-slate-50 hover:bg-slate-100 px-6 py-3 border-t border-slate-100 transition-colors group/link"
         >
           <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
             <ExternalLink size={16} />
@@ -229,9 +229,10 @@ export default function ClassSyncApp() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Update FetchData dependency to run when Profile is loaded (Fixes Empty Admin Tabs)
   useEffect(() => {
-    if (session && view !== 'auth' && supabase) fetchData();
-  }, [session, view]);
+    if (session && view !== 'auth' && supabase && profile) fetchData();
+  }, [session, view, profile]);
 
   const fetchProfile = async (userId) => {
     if (!supabase) return;
@@ -262,7 +263,7 @@ export default function ClassSyncApp() {
     const { data: settings } = await supabase.from('app_settings').select('*').single();
     if (settings) setModerationEnabled(settings.moderation_enabled);
 
-    // Fetch all profiles if admin
+    // Now securely fetches admin data because we check profile.is_admin inside the effect dependency
     if (profile?.is_admin) {
       const { data: users } = await supabase.from('profiles').select('*');
       setAllProfiles(users || []);
@@ -434,10 +435,11 @@ export default function ClassSyncApp() {
         </div>
       </header>
 
-      {/* COLOR PICKER */}
+      {/* NEW COLOR PICKER (Cleaner, Pastel, Squircles) */}
       {showSettings && (
         <div className="bg-white border-b border-slate-100 p-6 shadow-sm animate-in slide-in-from-top-2 relative z-20">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Left: Main Accent */}
             <div>
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">App Theme</h3>
               <div className="flex gap-3">
@@ -451,8 +453,11 @@ export default function ClassSyncApp() {
               </div>
             </div>
 
+            {/* Right: Smart Class Coloring */}
             <div>
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Class Colors</h3>
+              
+              {/* Step 1: Click a Class */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => {
                   const isActive = selectedClassForColor === c.id;
@@ -469,6 +474,7 @@ export default function ClassSyncApp() {
                 })}
               </div>
 
+              {/* Step 2: Show Colors Only If Class Selected */}
               {selectedClassForColor && (
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 items-center bg-slate-50 p-2 rounded-2xl w-fit">
                   <span className="text-xs font-bold text-slate-400 px-2">Pick:</span>
@@ -476,7 +482,7 @@ export default function ClassSyncApp() {
                     <button 
                       key={c} 
                       onClick={() => setClassColors({...classColors, [selectedClassForColor]: c})} 
-                      className={`w-6 h-6 rounded-lg ${COLORS[c].bg.replace('100','500')} hover:scale-110 transition-transform ${classColors[selectedClassForColor]===c ? 'ring-2 ring-white shadow-md' : ''}`} 
+                      className={`w-8 h-8 rounded-2xl ${COLORS[c].bg.replace('100','500')} hover:scale-110 transition-transform ${classColors[selectedClassForColor]===c ? 'ring-4 ring-offset-2 ring-slate-300 shadow-md' : ''}`} 
                     />
                   ))}
                 </div>
@@ -488,7 +494,6 @@ export default function ClassSyncApp() {
       )}
 
       <main className="flex-1 max-w-6xl mx-auto w-full p-6 relative">
-        {/* --- DASHBOARD --- */}
         {view === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
@@ -593,7 +598,7 @@ export default function ClassSyncApp() {
           </div>
         )}
 
-        {/* --- ADMIN VIEW (Full Code Restored) --- */}
+        {/* --- ADMIN VIEW (Fixed Tabs) --- */}
         {view === 'admin' && (
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
