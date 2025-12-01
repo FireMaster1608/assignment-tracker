@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js'; 
+import { createClient } from '@supabase/supabase-js';
 
 import { 
   BookOpen, CheckCircle, Clock, Plus, Shield, LogOut, AlertCircle, 
@@ -7,18 +7,24 @@ import {
   Trash2, UserX, Users, GraduationCap, Undo, Palette, Moon, Sun, 
   ExternalLink, ListPlus, Calendar
 } from 'lucide-react';
+
+// --- CONFIGURATION ---
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+// Initialize Supabase. 
+const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null;
 
 // --- UTILS ---
 const COLORS = {
-  blue: { bg: 'bg-blue-100 dark:bg-blue-900', text: 'text-blue-800 dark:text-blue-100', border: 'border-blue-500' },
-  red: { bg: 'bg-red-100 dark:bg-red-900', text: 'text-red-800 dark:text-red-100', border: 'border-red-500' },
-  green: { bg: 'bg-green-100 dark:bg-green-900', text: 'text-green-800 dark:text-green-100', border: 'border-green-500' },
-  purple: { bg: 'bg-purple-100 dark:bg-purple-900', text: 'text-purple-800 dark:text-purple-100', border: 'border-purple-500' },
-  orange: { bg: 'bg-orange-100 dark:bg-orange-900', text: 'text-orange-800 dark:text-orange-100', border: 'border-orange-500' },
-  pink: { bg: 'bg-pink-100 dark:bg-pink-900', text: 'text-pink-800 dark:text-pink-100', border: 'border-pink-500' },
+  blue: { bg: 'bg-blue-100 dark:bg-blue-900', text: 'text-blue-800 dark:text-blue-100', border: 'border-blue-500', btn: 'bg-blue-600 hover:bg-blue-700' },
+  red: { bg: 'bg-red-100 dark:bg-red-900', text: 'text-red-800 dark:text-red-100', border: 'border-red-500', btn: 'bg-red-600 hover:bg-red-700' },
+  green: { bg: 'bg-green-100 dark:bg-green-900', text: 'text-green-800 dark:text-green-100', border: 'border-green-500', btn: 'bg-green-600 hover:bg-green-700' },
+  purple: { bg: 'bg-purple-100 dark:bg-purple-900', text: 'text-purple-800 dark:text-purple-100', border: 'border-purple-500', btn: 'bg-purple-600 hover:bg-purple-700' },
+  orange: { bg: 'bg-orange-100 dark:bg-orange-900', text: 'text-orange-800 dark:text-orange-100', border: 'border-orange-500', btn: 'bg-orange-600 hover:bg-orange-700' },
+  pink: { bg: 'bg-pink-100 dark:bg-pink-900', text: 'text-pink-800 dark:text-pink-100', border: 'border-pink-500', btn: 'bg-pink-600 hover:bg-pink-700' },
 };
 
 const getUrgencyStyles = (dateStr, timeStr) => {
@@ -50,7 +56,7 @@ const getDomain = (url) => {
   }
 };
 
-// --- SUB-COMPONENTS (Moved outside to fix focus bug) ---
+// --- SUB-COMPONENTS (Moved OUTSIDE to fix focus bug) ---
 
 const NavBtn = ({ label, active, onClick, alert, accent }) => (
   <button onClick={onClick} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-colors flex items-center gap-2 ${active ? `${COLORS[accent].bg} ${COLORS[accent].text}` : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
@@ -71,7 +77,7 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
   const notes = state?.personal_note ? state.personal_note.split('\n') : [];
 
   return (
-    <div className={`bg-white dark:bg-gray-800 border-l-4 ${urgency.border} rounded-r-xl shadow-sm border-y border-r transition-all hover:shadow-md mb-3`}>
+    <div className={`bg-white dark:bg-gray-800 border-l-4 ${urgency.border} rounded-r-xl shadow-sm border-y border-r dark:border-gray-700 transition-all hover:shadow-md mb-3`}>
       <div className="p-4 flex gap-4">
         <button 
           onClick={(e) => {
@@ -85,10 +91,13 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
         
         <div className="flex-1 cursor-pointer" onClick={()=>setExpanded(!expanded)}>
           <div className="flex flex-wrap items-center gap-2 mb-1">
+            {/* The Class Tag (Color based on Class Settings) */}
             <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${classTheme.bg} ${classTheme.text} border border-transparent`}>{cls?.name}</span>
+            
+            {/* Urgency Tag (If Needed) */}
             {urgency.label === 'Overdue' && <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-bold animate-pulse">LATE</span>}
             
-            {/* Quick Link Access */}
+            {/* Quick Link Access (Clickable without expanding) */}
             {state?.personal_link && (
               <a 
                 href={state.personal_link.startsWith('http') ? state.personal_link : `https://${state.personal_link}`} 
@@ -208,6 +217,7 @@ export default function ClassSyncApp() {
   }, [accent, classColors]);
 
   useEffect(() => {
+    // Save view to local storage so it persists on reload
     if (view !== 'loading' && view !== 'auth' && view !== 'setup_required') {
       localStorage.setItem('cs_last_view', view);
     }
@@ -404,13 +414,13 @@ export default function ClassSyncApp() {
   if (view === 'auth') return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md transition-colors">
-        <div className="flex justify-center mb-6"><div className={`${COLORS[accent].bg} p-3 rounded-full ${COLORS[accent].text}`}><BookOpen className="w-8 h-8" /></div></div>
+        <div className="flex justify-center mb-6"><div className={`${COLORS[accent].btn} p-3 rounded-full text-white`}><BookOpen className="w-8 h-8" /></div></div>
         <h1 className="text-3xl font-bold text-center mb-6 text-gray-800 dark:text-white">ClassSync</h1>
         <form onSubmit={handleAuth} className="space-y-4">
           {!isLoginMode && <input className="w-full p-3 border rounded dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Full Name" value={fullName} onChange={e=>setFullName(e.target.value)} />}
           <input className="w-full p-3 border rounded dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
           <input className="w-full p-3 border rounded dark:bg-gray-700 dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500" type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
-          <button disabled={authLoading} className={`w-full ${COLORS[accent].bg.replace('100', '600').replace('900', '600')} text-white p-3 rounded font-bold hover:opacity-90 transition`}>{authLoading ? '...' : (isLoginMode ? 'Log In' : 'Sign Up')}</button>
+          <button disabled={authLoading} className={`w-full ${COLORS[accent].btn} text-white p-3 rounded font-bold hover:opacity-90 transition`}>{authLoading ? '...' : (isLoginMode ? 'Log In' : 'Sign Up')}</button>
         </form>
         <button onClick={()=>setIsLoginMode(!isLoginMode)} className={`w-full text-center text-sm ${COLORS[accent].text.replace('800','600').replace('100','300')} mt-4 hover:underline`}>{isLoginMode ? 'Create Account' : 'Have an account?'}</button>
         {authError && <p className="text-red-500 text-center mt-2 text-sm">{authError}</p>}
@@ -448,7 +458,7 @@ export default function ClassSyncApp() {
               <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">Theme</h3>
               <div className="flex gap-2 items-center">
                 {Object.keys(COLORS).map(c => (
-                  <button key={c} onClick={()=>setAccent(c)} className={`w-6 h-6 rounded-full ${COLORS[c].bg.replace('100','500').replace('900','500')} ${accent===c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800' : ''}`} />
+                  <button key={c} onClick={()=>setAccent(c)} className={`w-6 h-6 rounded-full ${COLORS[c].btn} ${accent===c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800' : ''}`} />
                 ))}
                 <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
                 <button onClick={()=>setDarkMode(!darkMode)} className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 transition-colors">
@@ -464,7 +474,7 @@ export default function ClassSyncApp() {
                     <span className="text-xs font-bold">{c.name}</span>
                     <div className="flex gap-1">
                       {['blue','red','green','purple'].map(color => (
-                        <button key={color} onClick={()=>setClassColors({...classColors, [c.id]: color})} className={`w-3 h-3 rounded-full ${COLORS[color].bg.replace('100','500').replace('900','500')} ${classColors[c.id]===color ? 'ring-1 ring-offset-1 ring-gray-400 dark:ring-offset-gray-600' : ''}`} />
+                        <button key={color} onClick={()=>setClassColors({...classColors, [c.id]: color})} className={`w-3 h-3 rounded-full ${COLORS[color].btn} ${classColors[c.id]===color ? 'ring-1 ring-offset-1 ring-gray-400 dark:ring-offset-gray-600' : ''}`} />
                       ))}
                     </div>
                   </div>
@@ -507,7 +517,7 @@ export default function ClassSyncApp() {
                       {!newItem.time && <span className="absolute right-3 top-2 text-xs text-gray-400 pointer-events-none">--:-- --</span>}
                     </div>
                   </div>
-                  <button disabled={!profile.enrolled_classes?.length} className={`w-full ${COLORS[accent].bg.replace('100', '600').replace('900','600')} text-white p-2 rounded font-bold hover:opacity-90 transition disabled:opacity-50`}>
+                  <button disabled={!profile.enrolled_classes?.length} className={`w-full ${COLORS[accent].btn} text-white p-2 rounded font-bold hover:opacity-90 transition disabled:opacity-50`}>
                     {profile.is_admin || !moderationEnabled ? 'Publish Task' : 'Suggest Task'}
                   </button>
                   {!profile.enrolled_classes?.length && <p className="text-xs text-red-500 text-center">Enroll in a class first.</p>}
