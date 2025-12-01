@@ -19,7 +19,7 @@ const COLORS = {
   purple: { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300', btn: 'bg-purple-500 hover:bg-purple-600', ring: 'ring-purple-400' },
   blue: { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300', btn: 'bg-blue-500 hover:bg-blue-600', ring: 'ring-blue-400' },
   green: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300', btn: 'bg-green-500 hover:bg-green-600', ring: 'ring-green-400' },
-  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300', btn: 'bg-yellow-400 hover:bg-yellow-500', ring: 'ring-yellow-400' },
+  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300', btn: 'bg-yellow-500 hover:bg-yellow-600', ring: 'ring-yellow-400' },
 };
 
 const getUrgencyStyles = (dateStr, timeStr) => {
