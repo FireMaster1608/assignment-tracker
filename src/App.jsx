@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'; 
 
 import { 
   BookOpen, CheckCircle, Clock, Plus, Shield, LogOut, AlertCircle, 
@@ -7,25 +7,19 @@ import {
   Trash2, UserX, Users, GraduationCap, Undo, Palette, 
   ExternalLink, Calendar, ChevronRight
 } from 'lucide-react';
-
-// --- CONFIGURATION ---
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
-// Initialize Supabase (Production Ready)
-const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
-
-// --- UTILS (Pastel Gradient) ---
+// --- UTILS (Updated Pastel Gradient) ---
 const COLORS = {
   pink: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-200', btn: 'bg-pink-500 hover:bg-pink-600', ring: 'ring-pink-400' },
+  orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', btn: 'bg-orange-500 hover:bg-orange-600', ring: 'ring-orange-400' },
   red: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-200', btn: 'bg-rose-500 hover:bg-rose-600', ring: 'ring-rose-400' },
   purple: { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200', btn: 'bg-violet-500 hover:bg-violet-600', ring: 'ring-violet-400' },
   blue: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', btn: 'bg-blue-500 hover:bg-blue-600', ring: 'ring-blue-400' },
   green: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200', btn: 'bg-emerald-500 hover:bg-emerald-600', ring: 'ring-emerald-400' },
-  lime: { bg: 'bg-lime-100', text: 'text-lime-700', border: 'border-lime-200', btn: 'bg-lime-500 hover:bg-lime-600', ring: 'ring-lime-400' },
-  yellow: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200', btn: 'bg-amber-400 hover:bg-amber-500', ring: 'ring-amber-400' },
+  yellow: { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200', btn: 'bg-yellow-400 hover:bg-yellow-500', ring: 'ring-yellow-400' },
 };
 
 const getUrgencyStyles = (dateStr, timeStr) => {
@@ -90,7 +84,7 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
         
         <div className="flex-1 cursor-pointer" onClick={()=>setExpanded(!expanded)}>
           {/* Header: Date & Time */}
-          <div className="flex justify-between items-start mb-3">
+          <div className="flex justify-between items-start mb-2">
              <div className="flex items-center gap-4">
                <span className={`text-sm font-bold flex items-center gap-1.5 ${urgency.color}`}>
                  <Calendar size={16} className="stroke-[2.5]"/>
@@ -105,9 +99,9 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
              {urgency.label === 'Overdue' && <span className="text-[10px] bg-red-100 text-red-600 px-3 py-1 rounded-full font-black tracking-wider">LATE</span>}
           </div>
 
-          {/* Body: Title & Class */}
+          {/* Body: Title & Class (Title size reduced) */}
           <div className="flex items-center flex-wrap gap-3 mb-3">
-            <h3 className="font-extrabold text-gray-800 text-2xl leading-tight tracking-tight">{a.title}</h3>
+            <h3 className="font-extrabold text-gray-800 text-lg leading-tight tracking-tight">{a.title}</h3>
             <span className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider ${classTheme.bg} ${classTheme.text}`}>
               {cls?.name}
             </span>
@@ -128,7 +122,7 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
           href={state.personal_link.startsWith('http') ? state.personal_link : `https://${state.personal_link}`} 
           target="_blank" 
           rel="noreferrer"
-          className="block bg-slate-50 hover:bg-slate-100 px-6 py-3 border-t border-slate-100 transition-colors group/link"
+          className="block bg-gray-50 hover:bg-slate-100 px-6 py-3 border-t border-slate-100 transition-colors group/link"
         >
           <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
             <ExternalLink size={16} />
@@ -268,6 +262,7 @@ export default function ClassSyncApp() {
     const { data: settings } = await supabase.from('app_settings').select('*').single();
     if (settings) setModerationEnabled(settings.moderation_enabled);
 
+    // Fetch all profiles if admin
     if (profile?.is_admin) {
       const { data: users } = await supabase.from('profiles').select('*');
       setAllProfiles(users || []);
@@ -439,11 +434,10 @@ export default function ClassSyncApp() {
         </div>
       </header>
 
-      {/* NEW COLOR PICKER (Cleaner, Pastel, Squircles) */}
+      {/* COLOR PICKER */}
       {showSettings && (
         <div className="bg-white border-b border-slate-100 p-6 shadow-sm animate-in slide-in-from-top-2 relative z-20">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-            {/* Left: Main Accent */}
             <div>
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">App Theme</h3>
               <div className="flex gap-3">
@@ -457,11 +451,8 @@ export default function ClassSyncApp() {
               </div>
             </div>
 
-            {/* Right: Smart Class Coloring */}
             <div>
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Class Colors</h3>
-              
-              {/* Step 1: Click a Class */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => {
                   const isActive = selectedClassForColor === c.id;
@@ -478,7 +469,6 @@ export default function ClassSyncApp() {
                 })}
               </div>
 
-              {/* Step 2: Show Colors Only If Class Selected */}
               {selectedClassForColor && (
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 items-center bg-slate-50 p-2 rounded-2xl w-fit">
                   <span className="text-xs font-bold text-slate-400 px-2">Pick:</span>
@@ -498,6 +488,7 @@ export default function ClassSyncApp() {
       )}
 
       <main className="flex-1 max-w-6xl mx-auto w-full p-6 relative">
+        {/* --- DASHBOARD --- */}
         {view === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
@@ -555,8 +546,6 @@ export default function ClassSyncApp() {
           </div>
         )}
 
-        {/* ... (History, Classes, and Admin Tabs remain structurally the same but benefit from the global style updates) ... */}
-        
         {/* --- HISTORY VIEW --- */}
         {view === 'history' && (
           <div className="max-w-3xl mx-auto">
@@ -604,7 +593,7 @@ export default function ClassSyncApp() {
           </div>
         )}
 
-        {/* --- ADMIN VIEW --- */}
+        {/* --- ADMIN VIEW (Full Code Restored) --- */}
         {view === 'admin' && (
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
@@ -620,7 +609,7 @@ export default function ClassSyncApp() {
               </button>
             </div>
 
-            {/* Admin Content Area */}
+            {/* Assignments Tab */}
             {adminTab === 'assignments' && (
               <div className="space-y-3">
                 {pendingAssignments.length === 0 && <div className="text-center py-20 text-slate-400">No pending assignments to review.</div>}
@@ -638,8 +627,63 @@ export default function ClassSyncApp() {
                 ))}
               </div>
             )}
-            
-            {/* ... (Other admin tabs follow same pattern) ... */}
+
+            {/* Classes Tab */}
+            {adminTab === 'classes' && (
+              <div className="space-y-3">
+                <h3 className="font-bold text-slate-400 uppercase tracking-widest text-xs mb-3">Pending Requests</h3>
+                {pendingClasses.length === 0 && <p className="text-sm text-slate-400 italic mb-8">No class requests.</p>}
+                {pendingClasses.map(c => (
+                  <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                    <div><p className="font-bold text-lg">{c.name}</p><p className="text-sm text-slate-500">{c.teacher}</p></div>
+                    <div className="flex gap-3">
+                      <button onClick={()=>updateClassStatus(c.id, 'approved')} className="p-3 bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200 transition-colors"><Check size={20}/></button>
+                      <button onClick={()=>updateClassStatus(c.id, 'deleted')} className="p-3 bg-rose-100 text-rose-700 rounded-xl hover:bg-rose-200 transition-colors"><Trash2 size={20}/></button>
+                    </div>
+                  </div>
+                ))}
+
+                <h3 className="font-bold text-slate-400 uppercase tracking-widest text-xs mb-3 mt-10">Active Classes</h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {classes.filter(c => c.status === 'approved').map(c => (
+                     <div key={c.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                       <span className="font-bold text-slate-700">{c.name} <span className="text-slate-400 font-normal">({c.teacher})</span></span>
+                       <button onClick={()=>updateClassStatus(c.id, 'deleted')} className="text-rose-500 text-xs font-bold hover:underline bg-white px-3 py-1.5 border border-slate-200 rounded-lg">Remove</button>
+                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Users Tab */}
+            {adminTab === 'users' && (
+              <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 font-black text-slate-400 uppercase tracking-wider text-xs">
+                    <tr><th className="p-5">Name</th><th className="p-5 hidden sm:table-cell">Email</th><th className="p-5">Status</th><th className="p-5">Action</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {allProfiles.map(u => (
+                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-5">
+                          <div className="font-bold text-slate-800 text-base">{u.full_name} {u.is_admin && <span className="bg-violet-100 text-violet-700 text-[10px] px-2 py-0.5 rounded-full ml-2">ADMIN</span>}</div>
+                          <div className="text-xs text-slate-400 sm:hidden mt-1">{u.email}</div>
+                        </td>
+                        <td className="p-5 text-slate-500 font-medium hidden sm:table-cell">{u.email}</td>
+                        <td className="p-5">{u.is_banned ? <span className="text-rose-700 font-bold bg-rose-50 px-3 py-1 rounded-full text-xs">BANNED</span> : <span className="text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full text-xs">ACTIVE</span>}</td>
+                        <td className="p-5">
+                          {!u.is_admin && (
+                            <button onClick={()=>toggleUserBan(u.id, u.is_banned)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${u.is_banned ? 'bg-slate-100 text-slate-500 hover:bg-slate-200' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}>
+                              {u.is_banned ? 'Unban User' : 'Ban User'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
