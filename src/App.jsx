@@ -461,16 +461,12 @@ export default function ClassSyncApp() {
             
             <div className="h-6 w-px bg-slate-200 mx-2"></div>
             
-            <div className="h-6 w-px bg-slate-200 mx-2"></div>
-
 {isOffline && (
   <div className="flex items-center gap-2 bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
     <WifiOff size={14} />
     <span className="hidden sm:inline">Offline</span>
   </div>
 )}
-
-<button onClick={()=>setShowSettings(!showSettings)}
             <button onClick={()=>setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"><Palette size={20} /></button>
             <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"><LogOut className="w-5 h-5" /></button>
           </nav>
