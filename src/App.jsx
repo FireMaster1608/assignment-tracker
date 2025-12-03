@@ -175,7 +175,7 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
 export default function ClassSyncApp() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [view, setView] = useState(localStorage.getItem('cs_last_view') || 'loading');
+  const [view, setView] = useState('loading');
   
   const [assignments, setAssignments] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -236,14 +236,22 @@ export default function ClassSyncApp() {
 
   const fetchProfile = async (userId) => {
     if (!supabase) return;
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (data?.is_banned) {
-      setView('banned');
-    } else {
-      setProfile(data);
-      const lastView = localStorage.getItem('cs_last_view');
-      setView(lastView && lastView !== 'loading' && lastView !== 'auth' ? lastView : 'dashboard');
-      await supabase.from('profiles').update({ last_seen: new Date() }).eq('id', userId);
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      
+      if (error) throw error;
+      
+      if (data?.is_banned) {
+        setView('banned');
+      } else {
+        setProfile(data);
+        const lastView = localStorage.getItem('cs_last_view');
+        setView(lastView && lastView !== 'loading' && lastView !== 'auth' ? lastView : 'dashboard');
+        await supabase.from('profiles').update({ last_seen: new Date() }).eq('id', userId);
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      setView('dashboard');
     }
   };
 
@@ -394,6 +402,7 @@ export default function ClassSyncApp() {
   const pendingClasses = classes.filter(c => c.status === 'pending');
 
   if (view === 'setup_required') return <div className="h-screen flex items-center justify-center p-6 text-center"><h1 className="text-xl font-bold text-red-600">Config Missing in .env</h1></div>;
+  if (view === 'loading') return <div className="h-screen flex items-center justify-center bg-slate-50"><div className="flex flex-col items-center gap-4"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p className="text-slate-600 font-medium">Loading...</p></div></div>;
   if (view === 'banned') return <div className="h-screen flex flex-col items-center justify-center bg-red-50 text-red-800"><Shield className="w-16 h-16 mb-4" /><h1 className="text-3xl font-bold">Access Restricted</h1></div>;
   
   if (view === 'auth') return (
