@@ -694,29 +694,7 @@ setAssignments([...(asgs || []), ...localTasks]);
                     {newItem.isPersonal ? 'Add Personal Task' : (profile.is_admin || !moderationEnabled ? 'Publish Task' : 'Suggest Task')}
                   </button>
                   {!newItem.isPersonal && !profile.enrolled_classes?.length && <p className="text-xs text-rose-500 text-center font-bold bg-rose-50 p-2 rounded-lg">Enroll in a class first!</p>}
-                </form>
-                  
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Task</label>
-                    <input className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" placeholder="Enter task name..." value={newItem.title} onChange={e=>setNewItem({...newItem, title: e.target.value})} />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Due Date</label>
-                      <input type="date" className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.date} onChange={e=>setNewItem({...newItem, date: e.target.value})} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Time (Opt)</label>
-                      <input type="time" className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.time} onChange={e=>setNewItem({...newItem, time: e.target.value})} />
-                    </div>
-                  </div>
-                  
-                  <button disabled={!profile.enrolled_classes?.length} className={`w-full ${COLORS[accent].btn} text-white p-4 rounded-2xl font-bold shadow-lg shadow-${accent}-200 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none mt-2`}>
-                    {profile.is_admin || !moderationEnabled ? 'Publish Task' : 'Suggest Task'}
-                  </button>
-                  {!profile.enrolled_classes?.length && <p className="text-xs text-rose-500 text-center font-bold bg-rose-50 p-2 rounded-lg">Enroll in a class first!</p>}
-                </form>
+                  </form>
               </div>
             </div>
           </div>
