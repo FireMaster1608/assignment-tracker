@@ -369,7 +369,6 @@ setAssignments([...filteredAsgs, ...localTasks]);
         user_id: session.user.id,
         status: 'approved'
       };
-      if (newItem.isPersonal) {
         if (newItem.storeLocal) {
           // Store in localStorage
           const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
@@ -947,5 +946,4 @@ setAssignments([...filteredAsgs, ...localTasks]);
       </main>
     </div>
   );
-}
 }
