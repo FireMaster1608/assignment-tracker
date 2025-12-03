@@ -369,50 +369,50 @@ setAssignments([...filteredAsgs, ...localTasks]);
         user_id: session.user.id,
         status: 'approved'
       };
-    
-      if (newItem.storeLocal) {
-        // Store in localStorage
-        const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
-        personalTask.id = Date.now();
-        localTasks.push(personalTask);
-        localStorage.setItem('cs_personal_tasks', JSON.stringify(localTasks));
-        setAssignments([...assignments, personalTask]);
-      } else {
-        // Store on server
-        const { data, error } = await supabase.from('assignments').insert(personalTask).select();
-        if (error) {
-          console.error('Error saving personal task:', error);
-          alert('Failed to save task: ' + error.message);
-        } else if (data) {
-          await fetchData(); // Refresh all data including the new task
+      if (newItem.isPersonal) {
+        if (newItem.storeLocal) {
+          // Store in localStorage
+          const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
+          personalTask.id = Date.now();
+          localTasks.push(personalTask);
+          localStorage.setItem('cs_personal_tasks', JSON.stringify(localTasks));
+          setAssignments([...assignments, personalTask]);
+        } else {
+          // Store on server
+          const { data, error } = await supabase.from('assignments').insert(personalTask).select();
+          if (error) {
+            console.error('Error saving personal task:', error);
+            alert('Failed to save task: ' + error.message);
+          } else if (data) {
+            await fetchData(); // Refresh all data including the new task
+          }
         }
-      }
       
-      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
-      alert("Personal task added!");
-    } 
-      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
-      alert("Personal task added!");
-    } else {
-      // Handle school assignment
-      if (!newItem.classId) return;
-      const status = (profile.is_admin || !moderationEnabled) ? 'approved' : 'pending';
+        // Only one version of these
+        setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
+        alert("Personal task added!");
       
-      await supabase.from('assignments').insert({
-        title: newItem.title,
-        class_id: newItem.classId,
-        due_date: newItem.date,
-        due_time: newItem.time,
-        suggested_by: profile.full_name,
-        status,
-        is_personal: false
-      });
-      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
-      fetchData();
-      alert(status === 'approved' ? "Published!" : "Sent for approval.");
-    }
-  };
-
+      } else {
+        // Handle school assignment
+        if (!newItem.classId) return;
+      
+        const status = (profile.is_admin || !moderationEnabled) ? 'approved' : 'pending';
+        
+        await supabase.from('assignments').insert({
+          title: newItem.title,
+          class_id: newItem.classId,
+          due_date: newItem.date,
+          due_time: newItem.time,
+          suggested_by: profile.full_name,
+          status,
+          is_personal: false
+        });
+      
+        setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
+        fetchData();
+        alert(status === 'approved' ? "Published!" : "Sent for approval.");
+      }      
+    };
   const suggestClass = async (e) => {
     e.preventDefault();
     if (!newClass.name || !supabase) return;
