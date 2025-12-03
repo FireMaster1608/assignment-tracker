@@ -5,7 +5,7 @@ import {
   BookOpen, CheckCircle, Clock, Plus, Shield, LogOut, AlertCircle, 
   Check, X, Lock, Unlock, Settings, Link as LinkIcon, FileText, 
   Trash2, UserX, Users, GraduationCap, Undo, Palette, 
-  ExternalLink, Calendar, ChevronRight, WifiOff
+  ExternalLink, Calendar, ChevronRight, WifiOff, Info, Asterisk
 } from 'lucide-react';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -58,8 +58,7 @@ const NavBtn = ({ label, active, onClick, alert, accent }) => (
   </button>
 );
 
-const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonalState, accent, classColors }) => {
-  const [expanded, setExpanded] = useState(false);
+const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonalState, accent, classColors, onShowLocalWarning }) => {  const [expanded, setExpanded] = useState(false);
   const cls = classes.find(c => c.id === a.class_id);
   const state = personalStates[a.id];
   const urgency = getUrgencyStyles(a.due_date, a.due_time);
@@ -102,9 +101,23 @@ const AssignmentCard = ({ assignment: a, classes, personalStates, updatePersonal
           {/* Body: Title & Class (Reduced Title Size) */}
           <div className="flex items-center flex-wrap gap-3 mb-3">
             <h3 className="font-extrabold text-gray-800 text-xl leading-tight tracking-tight">{a.title}</h3>
-            <span className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider ${classTheme.bg} ${classTheme.text}`}>
-              {cls?.name}
-            </span>
+            {a.is_personal ? (
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider ${classTheme.bg} ${classTheme.text}`}>
+                Personal
+                {a.store_local && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onShowLocalWarning(); }}
+                    className="hover:scale-110 transition-transform"
+                  >
+                    <Asterisk size={12} className="stroke-[3]" />
+                  </button>
+                )}
+              </span>
+            ) : (
+              <span className={`inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider ${classTheme.bg} ${classTheme.text}`}>
+                {cls?.name}
+              </span>
+            )}
           </div>
           
           {/* Notes Preview (Larger Font) */}
@@ -191,7 +204,8 @@ export default function ClassSyncApp() {
   const [selectedClassForColor, setSelectedClassForColor] = useState(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showOfflineNotice, setShowOfflineNotice] = useState(false);
-
+  const [showStorageInfo, setShowStorageInfo] = useState(false);
+  const [showLocalWarning, setShowLocalWarning] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -199,7 +213,7 @@ export default function ClassSyncApp() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [newItem, setNewItem] = useState({ title: '', classId: '', date: '', time: '' });
+  const [newItem, setNewItem] = useState({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
   const [newClass, setNewClass] = useState({ name: '', teacher: '' });
   const [adminTab, setAdminTab] = useState('assignments');
 
@@ -281,7 +295,8 @@ export default function ClassSyncApp() {
     setClasses(cls || []);
     
     const { data: asgs } = await supabase.from('assignments').select('*');
-    setAssignments(asgs || []);
+const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
+setAssignments([...(asgs || []), ...localTasks]);
 
     const { data: states } = await supabase.from('user_assignment_states').select('*').eq('user_id', session.user.id);
     const stateMap = {};
@@ -331,20 +346,54 @@ export default function ClassSyncApp() {
 
   const suggestAssignment = async (e) => {
     e.preventDefault();
-    if (!newItem.classId || !newItem.title || !newItem.date || !supabase) return;
-    const status = (profile.is_admin || !moderationEnabled) ? 'approved' : 'pending';
+    if (!newItem.title || !newItem.date || !supabase) return;
     
-    await supabase.from('assignments').insert({
-      title: newItem.title,
-      class_id: newItem.classId,
-      due_date: newItem.date,
-      due_time: newItem.time,
-      suggested_by: profile.full_name,
-      status
-    });
-    setNewItem({ title: '', classId: '', date: '', time: '' });
-    fetchData();
-    alert(status === 'approved' ? "Published!" : "Sent for approval.");
+    if (newItem.isPersonal) {
+      // Handle personal task
+      const personalTask = {
+        title: newItem.title,
+        class_id: 'personal',
+        due_date: newItem.date,
+        due_time: newItem.time,
+        is_personal: true,
+        store_local: newItem.storeLocal,
+        user_id: session.user.id,
+        status: 'approved'
+      };
+  
+      if (newItem.storeLocal) {
+        // Store in localStorage
+        const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
+        personalTask.id = Date.now();
+        localTasks.push(personalTask);
+        localStorage.setItem('cs_personal_tasks', JSON.stringify(localTasks));
+        setAssignments([...assignments, personalTask]);
+      } else {
+        // Store on server
+        const { data } = await supabase.from('assignments').insert(personalTask).select();
+        if (data) setAssignments([...assignments, ...data]);
+      }
+      
+      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
+      alert("Personal task added!");
+    } else {
+      // Handle school assignment
+      if (!newItem.classId) return;
+      const status = (profile.is_admin || !moderationEnabled) ? 'approved' : 'pending';
+      
+      await supabase.from('assignments').insert({
+        title: newItem.title,
+        class_id: newItem.classId,
+        due_date: newItem.date,
+        due_time: newItem.time,
+        suggested_by: profile.full_name,
+        status,
+        is_personal: false
+      });
+      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
+      fetchData();
+      alert(status === 'approved' ? "Published!" : "Sent for approval.");
+    }
   };
 
   const suggestClass = async (e) => {
@@ -414,6 +463,7 @@ export default function ClassSyncApp() {
     if (!profile) return false;
     if (a.status !== 'approved') return false;
     if (personalStates[a.id]?.is_completed) return false;
+    if (a.is_personal && a.user_id === session.user.id) return true;
     return profile.enrolled_classes?.includes(a.class_id);
   }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
@@ -497,7 +547,13 @@ export default function ClassSyncApp() {
               
               {/* Step 1: Click a Class */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => {
+  <button 
+    onClick={()=>setSelectedClassForColor('personal')}
+    className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-all ${selectedClassForColor === 'personal' ? 'ring-2 ring-offset-2 ring-slate-300 scale-105' : 'opacity-70 hover:opacity-100'} ${COLORS[classColors['personal'] || 'blue'].bg} ${COLORS[classColors['personal'] || 'blue'].text} ${COLORS[classColors['personal'] || 'blue'].border}`}
+  >
+    Personal
+  </button>
+  {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => {
                   const isActive = selectedClassForColor === c.id;
                   const currentColor = classColors[c.id] || 'blue';
                   return (
@@ -547,21 +603,98 @@ export default function ClassSyncApp() {
                   <p className="text-sm">Enjoy your free time.</p>
                 </div>
               ) : (
-                myAssignments.map(a => <AssignmentCard key={a.id} assignment={a} classes={classes} personalStates={personalStates} updatePersonalState={updatePersonalState} accent={accent} classColors={classColors} />)
-              )}
+                myAssignments.map(a => <AssignmentCard key={a.id} assignment={a} classes={classes} personalStates={personalStates} updatePersonalState={updatePersonalState} accent={accent} classColors={classColors} onShowLocalWarning={() => setShowLocalWarning(true)} />)              )}
             </div>
             
             <div className="lg:col-span-1">
               <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 sticky top-28">
-                <h3 className={`font-extrabold text-xl mb-6 flex items-center gap-3 ${COLORS[accent].text}`}><Plus className="w-6 h-6" /> New Task</h3>
+              <h3 className={`font-extrabold text-xl mb-6 flex items-center gap-3 ${COLORS[accent].text}`}><Plus className="w-6 h-6" /> New Task</h3>
                 <form onSubmit={suggestAssignment} className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Class</label>
-                    <select className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.classId} onChange={e=>setNewItem({...newItem, classId: e.target.value})}>
-                      <option value="">Select a Class...</option>
-                      {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
+                  {/* Personal Task Toggle */}
+                  <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newItem.isPersonal}
+                        onChange={e => setNewItem({...newItem, isPersonal: e.target.checked, classId: e.target.checked ? 'personal' : ''})}
+                        className="w-5 h-5 rounded accent-indigo-500"
+                      />
+                      <span className="font-bold text-sm text-slate-700">Make Personal Task</span>
+                    </label>
                   </div>
+
+                  {/* Storage Option (only for personal tasks) */}
+                  {newItem.isPersonal && (
+                    <div className="bg-amber-50 p-4 rounded-2xl border-2 border-amber-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-amber-800 uppercase tracking-wider">Storage Location</label>
+                        <button 
+                          type="button"
+                          onClick={() => setShowStorageInfo(true)}
+                          className="text-amber-600 hover:text-amber-800 transition-colors"
+                        >
+                          <Info size={16} />
+                        </button>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setNewItem({...newItem, storeLocal: true})}
+                          className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                            newItem.storeLocal 
+                              ? 'bg-amber-200 text-amber-900 border-2 border-amber-300' 
+                              : 'bg-white text-amber-700 border-2 border-amber-200 hover:border-amber-300'
+                          }`}
+                        >
+                          💾 On Device
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewItem({...newItem, storeLocal: false})}
+                          className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                            !newItem.storeLocal 
+                              ? 'bg-amber-200 text-amber-900 border-2 border-amber-300' 
+                              : 'bg-white text-amber-700 border-2 border-amber-200 hover:border-amber-300'
+                          }`}
+                        >
+                          ☁️ On Server
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Class Selector (only for school tasks) */}
+                  {!newItem.isPersonal && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Class</label>
+                      <select className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.classId} onChange={e=>setNewItem({...newItem, classId: e.target.value})}>
+                        <option value="">Select a Class...</option>
+                        {classes.filter(c => profile.enrolled_classes?.includes(c.id)).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Task</label>
+                    <input className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" placeholder="Enter task name..." value={newItem.title} onChange={e=>setNewItem({...newItem, title: e.target.value})} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Due Date</label>
+                      <input type="date" className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.date} onChange={e=>setNewItem({...newItem, date: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Time (Opt)</label>
+                      <input type="time" className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.time} onChange={e=>setNewItem({...newItem, time: e.target.value})} />
+                    </div>
+                  </div>
+                  
+                  <button disabled={!newItem.isPersonal && !profile.enrolled_classes?.length} className={`w-full ${COLORS[accent].btn} text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none mt-2`}>
+                    {newItem.isPersonal ? 'Add Personal Task' : (profile.is_admin || !moderationEnabled ? 'Publish Task' : 'Suggest Task')}
+                  </button>
+                  {!newItem.isPersonal && !profile.enrolled_classes?.length && <p className="text-xs text-rose-500 text-center font-bold bg-rose-50 p-2 rounded-lg">Enroll in a class first!</p>}
+                </form>
                   
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Task</label>
@@ -757,6 +890,64 @@ export default function ClassSyncApp() {
             </div>
           </div>
         )}
+{/* --- STORAGE INFO POPUP --- */}
+{showStorageInfo && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95 fade-in duration-200">
+      <div className="flex items-start gap-4 mb-6">
+        <div className="bg-blue-100 p-3 rounded-2xl">
+          <Info className="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800 mb-3">Storage Options</h3>
+          <div className="space-y-4 text-sm text-slate-600">
+            <div>
+              <p className="font-bold text-slate-800 mb-1">💾 On Device (Recommended)</p>
+              <p className="leading-relaxed">Your task is saved only on this device. More private and secure, but won't appear on your other devices.</p>
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 mb-1">☁️ On Server</p>
+              <p className="leading-relaxed">Your task is saved to our server and syncs across all your devices. Less private as server administrators can see it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        onClick={() => setShowStorageInfo(false)}
+        className={`w-full px-4 py-3 ${COLORS[accent].btn} text-white rounded-xl font-bold transition-all`}
+      >
+        Got it
+      </button>
+    </div>
+  </div>
+)}
+
+{/* --- LOCAL TASK WARNING POPUP --- */}
+{showLocalWarning && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in zoom-in-95 fade-in duration-200">
+      <div className="flex items-start gap-4 mb-6">
+        <div className="bg-amber-100 p-3 rounded-2xl">
+          <Asterisk className="w-6 h-6 text-amber-600" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Device-Only Task</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            This task is stored only on this device. It won't appear on your other devices and may be lost if you clear your browser data or lose access to this device.
+          </p>
+        </div>
+      </div>
+      
+      <button 
+        onClick={() => setShowLocalWarning(false)}
+        className={`w-full px-4 py-3 ${COLORS[accent].btn} text-white rounded-xl font-bold transition-all`}
+      >
+        Understood
+      </button>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );
