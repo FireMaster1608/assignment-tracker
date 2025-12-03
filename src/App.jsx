@@ -296,7 +296,16 @@ export default function ClassSyncApp() {
     
     const { data: asgs } = await supabase.from('assignments').select('*');
 const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
-setAssignments([...(asgs || []), ...localTasks]);
+
+// Filter server personal tasks to only show current user's
+const filteredAsgs = (asgs || []).filter(a => {
+  if (a.is_personal) {
+    return a.user_id === session.user.id; // Only show user's own personal tasks
+  }
+  return true; // Show all non-personal tasks
+});
+
+setAssignments([...filteredAsgs, ...localTasks]);
 
     const { data: states } = await supabase.from('user_assignment_states').select('*').eq('user_id', session.user.id);
     const stateMap = {};
@@ -360,7 +369,7 @@ setAssignments([...(asgs || []), ...localTasks]);
         user_id: session.user.id,
         status: 'approved'
       };
-  
+    
       if (newItem.storeLocal) {
         // Store in localStorage
         const localTasks = JSON.parse(localStorage.getItem('cs_personal_tasks') || '[]');
@@ -370,10 +379,18 @@ setAssignments([...(asgs || []), ...localTasks]);
         setAssignments([...assignments, personalTask]);
       } else {
         // Store on server
-        const { data } = await supabase.from('assignments').insert(personalTask).select();
-        if (data) setAssignments([...assignments, ...data]);
+        const { data, error } = await supabase.from('assignments').insert(personalTask).select();
+        if (error) {
+          console.error('Error saving personal task:', error);
+          alert('Failed to save task: ' + error.message);
+        } else if (data) {
+          await fetchData(); // Refresh all data including the new task
+        }
       }
       
+      setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
+      alert("Personal task added!");
+    } 
       setNewItem({ title: '', classId: '', date: '', time: '', isPersonal: false, storeLocal: true });
       alert("Personal task added!");
     } else {
@@ -468,7 +485,9 @@ setAssignments([...(asgs || []), ...localTasks]);
   }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
   const completedAssignments = assignments.filter(a => {
-    return personalStates[a.id]?.is_completed && profile.enrolled_classes?.includes(a.class_id);
+    if (!personalStates[a.id]?.is_completed) return false;
+    if (a.is_personal && a.user_id === session.user.id) return true;
+    return profile.enrolled_classes?.includes(a.class_id);
   });
 
   const pendingAssignments = assignments.filter(a => a.status === 'pending');
