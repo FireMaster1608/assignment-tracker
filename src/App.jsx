@@ -610,19 +610,7 @@ setAssignments([...(asgs || []), ...localTasks]);
               <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 sticky top-28">
               <h3 className={`font-extrabold text-xl mb-6 flex items-center gap-3 ${COLORS[accent].text}`}><Plus className="w-6 h-6" /> New Task</h3>
                 <form onSubmit={suggestAssignment} className="space-y-4">
-                  {/* Personal Task Toggle */}
-                  <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newItem.isPersonal}
-                        onChange={e => setNewItem({...newItem, isPersonal: e.target.checked, classId: e.target.checked ? 'personal' : ''})}
-                        className="w-5 h-5 rounded accent-indigo-500"
-                      />
-                      <span className="font-bold text-sm text-slate-700">Make Personal Task</span>
-                    </label>
-                  </div>
-
+                 
                   {/* Storage Option (only for personal tasks) */}
                   {newItem.isPersonal && (
                     <div className="bg-amber-50 p-4 rounded-2xl border-2 border-amber-100 space-y-3">
@@ -646,7 +634,7 @@ setAssignments([...(asgs || []), ...localTasks]);
                               : 'bg-white text-amber-700 border-2 border-amber-200 hover:border-amber-300'
                           }`}
                         >
-                          💾 On Device
+                          On Device
                         </button>
                         <button
                           type="button"
@@ -657,7 +645,7 @@ setAssignments([...(asgs || []), ...localTasks]);
                               : 'bg-white text-amber-700 border-2 border-amber-200 hover:border-amber-300'
                           }`}
                         >
-                          ☁️ On Server
+                          On Server
                         </button>
                       </div>
                     </div>
@@ -689,7 +677,18 @@ setAssignments([...(asgs || []), ...localTasks]);
                       <input type="time" className="w-full p-3.5 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:bg-white outline-none focus:border-indigo-300 transition-all text-sm font-medium" value={newItem.time} onChange={e=>setNewItem({...newItem, time: e.target.value})} />
                     </div>
                   </div>
-                  
+                   {/* Personal Task Toggle */}
+                   <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newItem.isPersonal}
+                        onChange={e => setNewItem({...newItem, isPersonal: e.target.checked, classId: e.target.checked ? 'personal' : ''})}
+                        className="w-5 h-5 rounded accent-indigo-500"
+                      />
+                      <span className="font-bold text-sm text-slate-700">Make Personal Task</span>
+                    </label>
+                  </div>
                   <button disabled={!newItem.isPersonal && !profile.enrolled_classes?.length} className={`w-full ${COLORS[accent].btn} text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none mt-2`}>
                     {newItem.isPersonal ? 'Add Personal Task' : (profile.is_admin || !moderationEnabled ? 'Publish Task' : 'Suggest Task')}
                   </button>
@@ -880,11 +879,11 @@ setAssignments([...(asgs || []), ...localTasks]);
           <h3 className="text-xl font-bold text-slate-800 mb-3">Storage Options</h3>
           <div className="space-y-4 text-sm text-slate-600">
             <div>
-              <p className="font-bold text-slate-800 mb-1">💾 On Device (Recommended)</p>
+              <p className="font-bold text-slate-800 mb-1">On Device</p>
               <p className="leading-relaxed">Your task is saved only on this device. More private and secure, but won't appear on your other devices.</p>
             </div>
             <div>
-              <p className="font-bold text-slate-800 mb-1">☁️ On Server</p>
+              <p className="font-bold text-slate-800 mb-1">On Server</p>
               <p className="leading-relaxed">Your task is saved to our server and syncs across all your devices. Less private as server administrators can see it.</p>
             </div>
           </div>
