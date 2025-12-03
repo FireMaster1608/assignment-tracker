@@ -5,7 +5,7 @@ import {
   BookOpen, CheckCircle, Clock, Plus, Shield, LogOut, AlertCircle, 
   Check, X, Lock, Unlock, Settings, Link as LinkIcon, FileText, 
   Trash2, UserX, Users, GraduationCap, Undo, Palette, 
-  ExternalLink, Calendar, ChevronRight
+  ExternalLink, Calendar, ChevronRight, WifiOff
 } from 'lucide-react';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -189,6 +189,8 @@ export default function ClassSyncApp() {
   const [showSettings, setShowSettings] = useState(false);
   const [undoTask, setUndoTask] = useState(null);
   const [selectedClassForColor, setSelectedClassForColor] = useState(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showOfflineNotice, setShowOfflineNotice] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -205,6 +207,24 @@ export default function ClassSyncApp() {
     localStorage.setItem('cs_accent', accent);
     localStorage.setItem('cs_class_colors', JSON.stringify(classColors));
   }, [accent, classColors]);
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      setShowOfflineNotice(false);
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+      setShowOfflineNotice(true);
+    };
+  
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+  
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (view !== 'loading' && view !== 'auth' && view !== 'setup_required') {
@@ -296,7 +316,10 @@ export default function ClassSyncApp() {
     finally { setAuthLoading(false); }
   };
 
-  const handleLogout = async () => supabase.auth.signOut();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('auth');
+  };
 
   const toggleClassEnrollment = async (classId) => {
     if (!supabase) return;
@@ -438,6 +461,16 @@ export default function ClassSyncApp() {
             
             <div className="h-6 w-px bg-slate-200 mx-2"></div>
             
+            <div className="h-6 w-px bg-slate-200 mx-2"></div>
+
+{isOffline && (
+  <div className="flex items-center gap-2 bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+    <WifiOff size={14} />
+    <span className="hidden sm:inline">Offline</span>
+  </div>
+)}
+
+<button onClick={()=>setShowSettings(!showSettings)}
             <button onClick={()=>setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"><Palette size={20} /></button>
             <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all"><LogOut className="w-5 h-5" /></button>
           </nav>
@@ -708,6 +741,24 @@ export default function ClassSyncApp() {
             <button onClick={handleUndo} className="text-indigo-300 font-black text-xs hover:text-white transition-colors flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
               <Undo size={14} /> UNDO
             </button>
+          </div>
+        )}
+{/* --- OFFLINE NOTICE --- */}
+{showOfflineNotice && (
+          <div className="fixed bottom-8 left-8 bg-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl max-w-md animate-in slide-in-from-bottom-4 fade-in duration-300 z-50">
+            <div className="flex items-start gap-4">
+              <WifiOff className="w-6 h-6 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-sm mb-1">You are offline</p>
+                <p className="text-xs opacity-90 mb-3">Tasks may not be up to date and your changes may not be saved.</p>
+                <button 
+                  onClick={() => setShowOfflineNotice(false)} 
+                  className="bg-white text-rose-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>
